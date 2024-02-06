@@ -73,6 +73,10 @@
 #include "data.h"
 #include "types.h"
 
+// for usleep - FIXME: Need a portable way of sleeping - may wish to expose do_sleep in e.g. port/fast3d/gfx_sdl2.cpp? --GM
+// FIXME: find out why including unistd.h or time.h doesn't work for getting a usleep or nanosleep definition - the following definition is specific to Linux --GM
+int usleep(unsigned int usec);
+
 extern u8 *g_MempHeap;
 extern u32 g_MempHeapSize;
 
@@ -493,11 +497,33 @@ void mainLoop(void)
 		profileReset();
 
 		while (g_MainChangeToStageNum < 0) {
-			const s32 cycles = osGetCount() - g_Vars.thisframestartt;
-			if (!g_Vars.mininc60 || (cycles >= g_Vars.mininc60 * CYCLES_PER_FRAME - CYCLES_PER_FRAME / 2)) {
-				schedStartFrame(&g_Sched);
-				mainTick();
-				schedEndFrame(&g_Sched);
+			// TODO: Not copy-paste this from port/src/libultra.c --GM
+			#define OS_COUNTER_RATE 46875000ULL
+			#define OS_COUNTER_NUM (OS_COUNTER_RATE / 1000ULL)
+			#define OS_COUNTER_DEN (1000000ULL / 1000ULL)
+			{
+				const s32 cycles = osGetCount() - g_Vars.thisframestartt;
+				if (g_Vars.mininc60 == 0 || (cycles >= g_Vars.mininc60 * CYCLES_PER_FRAME)) {
+					schedStartFrame(&g_Sched);
+					mainTick();
+					schedEndFrame(&g_Sched);
+				}
+			}
+			{
+				const s32 cycles = osGetCount() - g_Vars.thisframestartt;
+				if (g_Vars.mininc60 >= 1 && cycles >= 0) {
+					// Sleep for no shorter than 1 usec
+					// If this ends up getting a weird blip of >34000 usec, ignore it
+					s64 delta = ((((s64)g_Vars.mininc60) * CYCLES_PER_FRAME) - (s64)cycles);
+					delta *= OS_COUNTER_DEN;
+					delta /= OS_COUNTER_NUM;
+					//printf("%016llX\n", delta);
+					if (delta < 34000) {
+						if (delta >= 1) {
+							usleep(delta);
+						}
+					}
+				}
 			}
 		}
 
