@@ -16305,11 +16305,19 @@ bool propobjInteract(struct prop *prop)
 	if (g_Vars.normmplayerisrunning) {
 		scenarioHandleActivatedProp(g_Vars.currentplayer->prop->chr, prop);
 	} else {
+#if MAX_COOPCHRS > 2
+		if (g_Vars.currentplayernum == g_Vars.bondplayernum) {
+			obj->hidden |= OBJHFLAG_ACTIVATED_BY_BOND;
+		} else if (!PLAYERNUM_IS_ANTI(g_Vars.currentplayernum)) {
+			obj->hidden |= OBJHFLAG_ACTIVATED_BY_COOP;
+		}
+#else
 		if (g_Vars.currentplayernum == g_Vars.coopplayernum) {
 			obj->hidden |= OBJHFLAG_ACTIVATED_BY_COOP;
 		} else if (g_Vars.currentplayernum == g_Vars.bondplayernum) {
 			obj->hidden |= OBJHFLAG_ACTIVATED_BY_BOND;
 		}
+#endif
 	}
 
 	doorCallLift(prop, false);

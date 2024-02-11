@@ -2164,6 +2164,13 @@ bool aiIfChrActivatedObject(void)
 				pass = true;
 				obj->hidden &= ~(OBJHFLAG_ACTIVATED_BY_BOND | OBJHFLAG_ACTIVATED_BY_COOP);
 			}
+#if MAX_COOPCHRS > 2
+		} else if (cmd[2] == CHR_COOP) {
+			if (g_Vars.coopplayernum >= 0 && (obj->hidden & OBJHFLAG_ACTIVATED_BY_COOP)) {
+				pass = true;
+				obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_COOP;
+			}
+#endif
 		} else {
 			struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[2]);
 
