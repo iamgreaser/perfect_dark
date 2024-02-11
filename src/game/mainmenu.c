@@ -739,7 +739,23 @@ MenuItemHandlerResult menuhandlerAcceptMission(s32 operation, struct menuitem *i
 				g_Vars.bondplayernum = 0;
 				g_Vars.coopplayernum = 1;
 				g_Vars.antiplayernum = -1;
+#ifdef PLATFORM_N64
 				setNumPlayers(2);
+#else
+				u32 contmask = joyGetConnectedControllers();
+				u32 plrcount = 0;
+				u32 tmpmask;
+
+				// Count all players
+				tmpmask = contmask;
+				while (tmpmask) {
+					plrcount += (tmpmask & 0x1);
+					tmpmask >>= 1;
+				}
+
+				setNumPlayers(plrcount);
+				g_MpSetup.chrslots = contmask;
+#endif
 			} else {
 				// Coop with AI buddies
 				g_Vars.bondplayernum = 0;
