@@ -9062,11 +9062,32 @@ bool aiToggleP1P2(void)
 		struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[2]);
 
 		if (chr) {
+#if MAX_COOPCHRS > 2
+			u32 reps;
+			struct player *player;
+			u32 playernum = chr->p1p2;
+
+			// There can be multiple co-op players, so search for the next living one.
+			// With that said: We repeat PLAYERCOUNT() times.
+			// If we don't find anything, we're back to our original player.
+			for (reps = 0; reps < PLAYERCOUNT(); reps++) {
+
+				playernum = (playernum + 1) % PLAYERCOUNT();
+				player = g_Vars.players[playernum];
+
+				if (player && (!PLAYER_IS_ANTI(player)) && !player->isdead) {
+					// We have selected a new player.
+					chr->p1p2 = playernum;
+					break;
+				}
+			}
+#else
 			if (chr->p1p2 == g_Vars.bondplayernum && !g_Vars.coop->isdead) {
 				chr->p1p2 = g_Vars.coopplayernum;
 			} else if (!g_Vars.bond->isdead) {
 				chr->p1p2 = g_Vars.bondplayernum;
 			}
+#endif
 		}
 	}
 

@@ -14279,7 +14279,13 @@ s32 chrResolveId(struct chrdata *ref, s32 id)
 			break;
 		case CHR_P1P2_OPPOSITE:
 			if (g_Vars.coopplayernum >= 0) {
+#if MAX_COOPCHRS > 2
+				// Seems to only be used for `set_chr_chrflag(CHR_P1P2_OPPOSITE, CHRCFLAG_HIDDEN)`,
+				// which is probably redundant in a cutscene.
+				struct player *player = g_Vars.players[ref->p1p2 == 0 ? 1 : 0];
+#else
 				struct player *player = g_Vars.players[1 - ref->p1p2];
+#endif
 				if (player && player->prop && player->prop->chr) {
 					id = player->prop->chr->chrnum;
 				}
