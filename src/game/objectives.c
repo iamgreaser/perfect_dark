@@ -247,7 +247,12 @@ s32 objectiveCheck(s32 index)
 							prevplayernum = g_Vars.currentplayernum;
 
 							for (i = 0; i < PLAYERCOUNT(); i++) {
-								if (g_Vars.players[i] == g_Vars.bond || g_Vars.players[i] == g_Vars.coop) {
+#if MAX_COOPCHRS > 2
+								if (g_Vars.players[i] != NULL && PLAYER_IS_NOT_ANTI(g_Vars.players[i]))
+#else
+								if (g_Vars.players[i] == g_Vars.bond || g_Vars.players[i] == g_Vars.coop)
+#endif
+								{
 									setCurrentPlayerNum(i);
 
 									if (invHasProp(obj->prop)) {
