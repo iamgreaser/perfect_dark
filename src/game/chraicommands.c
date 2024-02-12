@@ -2081,9 +2081,45 @@ bool aiIfChrHasWeaponEquipped(void)
 	struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[2]);
 	bool passes = false;
 
+#if MAX_COOPCHRS > 2
+	if (chr && chr->prop && chr->prop->type == PROPTYPE_PLAYER) {
+		u32 playernum = playermgrGetPlayerNumByProp(chr->prop);
+		if (g_Vars.coopplayernum >= 0 && playernum == g_Vars.coopplayernum) {
+			// Check if equipped by any non-Bond Co-Op player
+			u32 prevplayernum = g_Vars.currentplayernum;
+
+			// Reuse playernum from above
+			for (playernum = 0; playernum < PLAYERCOUNT(); playernum++) {
+				struct player *player = g_Vars.players[playernum];
+
+				setCurrentPlayerNum(playernum);
+
+				if (player && player != g_Vars.bond && PLAYER_IS_NOT_ANTI(player)) {
+					if (bgunGetWeaponNum(HAND_RIGHT) == cmd[3]) {
+						passes = true;
+						break;
+					}
+				}
+			}
+
+			setCurrentPlayerNum(prevplayernum);
+		} else {
+			u32 prevplayernum = g_Vars.currentplayernum;
+
+			setCurrentPlayerNum(playernum);
+
+			if (bgunGetWeaponNum(HAND_RIGHT) == cmd[3]) {
+				passes = true;
+			}
+
+			setCurrentPlayerNum(prevplayernum);
+		}
+	}
+#else
 	if (chr && chr->prop && chr->prop->type == PROPTYPE_PLAYER) {
 		u32 prevplayernum = g_Vars.currentplayernum;
 		u32 playernum = playermgrGetPlayerNumByProp(chr->prop);
+
 		setCurrentPlayerNum(playernum);
 
 		if (bgunGetWeaponNum(HAND_RIGHT) == cmd[3]) {
@@ -2092,6 +2128,7 @@ bool aiIfChrHasWeaponEquipped(void)
 
 		setCurrentPlayerNum(prevplayernum);
 	}
+#endif
 
 	if (passes) {
 		g_Vars.aioffset = chraiGoToLabel(g_Vars.ailist, g_Vars.aioffset, cmd[4]);
@@ -5380,6 +5417,44 @@ bool aiIfNumPlayersLessThan(void)
 bool aiIfChrAmmoQuantityLessThan(void)
 {
 	u8 *cmd = g_Vars.ailist + g_Vars.aioffset;
+#if MAX_COOPCHRS > 2
+	bool passes = false;
+	if (cmd[2] == CHR_COOP) {
+		// Sum all ammo of non-Bond Co-Op players together
+		u32 prevplayernum = g_Vars.currentplayernum;
+		s32 ammosum = 0;
+		u32 playernum;
+
+		for (playernum = 0; playernum < PLAYERCOUNT(); playernum++) {
+			struct player *player = g_Vars.players[playernum];
+
+			setCurrentPlayerNum(playernum);
+
+			if (player && player != g_Vars.bond && PLAYER_IS_NOT_ANTI(player)) {
+				ammosum += bgunGetAmmoCount((s8)cmd[3]);
+			}
+		}
+
+		if (ammosum < (s32)(s8)cmd[4]) {
+			passes = true;
+		}
+
+		setCurrentPlayerNum(prevplayernum);
+	} else {
+		struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[2]);
+		if (chr && chr->prop && chr->prop->type == PROPTYPE_PLAYER) {
+			u32 prevplayernum = g_Vars.currentplayernum;
+			u32 playernum = playermgrGetPlayerNumByProp(chr->prop);
+			setCurrentPlayerNum(playernum);
+
+			if (bgunGetAmmoCount((s8)cmd[3]) < (s8)cmd[4]) {
+				passes = true;
+			}
+
+			setCurrentPlayerNum(prevplayernum);
+		}
+	}
+#else
 	struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[2]);
 	bool passes = false;
 
@@ -5394,6 +5469,7 @@ bool aiIfChrAmmoQuantityLessThan(void)
 
 		setCurrentPlayerNum(prevplayernum);
 	}
+#endif
 
 	if (passes) {
 		g_Vars.aioffset = chraiGoToLabel(g_Vars.ailist, g_Vars.aioffset, cmd[5]);
