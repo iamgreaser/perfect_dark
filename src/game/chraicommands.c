@@ -2366,6 +2366,47 @@ bool aiGiveObjectToChr(void)
 	struct defaultobj *obj = objFindByTagId(cmd[2]);
 	struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[3]);
 
+#if MAX_COOPCHRS > 2
+	if (cmd[3] == CHR_COOP) {
+		// Give this to every extra Co-Op player in descending order first
+		// Then we fall through to the usual logic to apply it to the regular assigned Co-Op player
+		u32 something;
+		u32 prevplayernum = g_Vars.currentplayernum;
+		u32 playernum;
+
+		for (playernum = PLAYERCOUNT() - 1; ((s32)playernum) >= 0; playernum--) {
+			struct player *player = g_Vars.players[playernum];
+			if (playernum != g_Vars.bondplayernum
+					&& playernum != g_Vars.coopplayernum
+					&& player
+					&& player->prop
+					&& PLAYER_IS_NOT_ANTI(player)) {
+				struct chrdata *coopchr = player->prop->chr;
+
+				if (obj && obj->prop && coopchr && coopchr->prop) {
+					struct defaultobj *obj2 = obj->prop->obj;
+
+					setCurrentPlayerNum(playernum);
+
+#if VERSION >= VERSION_NTSC_1_0
+					if (obj->prop->parent) {
+						objDetach(obj->prop);
+						objFreeEmbedmentOrProjectile(obj->prop);
+						propActivate(obj->prop);
+					}
+#endif
+
+					something = propPickupByPlayer(obj->prop, 0);
+					propExecuteTickOperation(obj->prop, something);
+					obj2->hidden = (playernum << 28) | (obj2->hidden & 0x0fffffff);
+				}
+			}
+		}
+
+		setCurrentPlayerNum(prevplayernum);
+	}
+#endif
+
 	if (obj && obj->prop && chr && chr->prop) {
 		if (chr->prop->type == PROPTYPE_PLAYER) {
 			u32 something;
