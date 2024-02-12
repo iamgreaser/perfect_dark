@@ -2213,6 +2213,21 @@ bool aiIfChrActivatedObject(void)
 					obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_COOP;
 				}
 			}
+		} else if (cmd[2] == CHR_TARGET) {
+			struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[2]);
+
+			if (chr && chr->prop && chr->prop->type == PROPTYPE_PLAYER) {
+				u32 playernum = playermgrGetPlayerNumByProp(chr->prop);
+				if (obj->prop->activatedbymask & (1 << playernum)) {
+					pass = true;
+					obj->prop->activatedbymask &= ~(1 << playernum);
+					if (playernum == g_Vars.bondplayernum) {
+						obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_BOND;
+					} else if (!PLAYERNUM_IS_ANTI(playernum)) {
+						obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_COOP;
+					}
+				}
+			}
 #endif
 		} else {
 			struct chrdata *chr = chrFindById(g_Vars.chrdata, cmd[2]);
