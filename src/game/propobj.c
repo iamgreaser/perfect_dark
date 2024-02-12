@@ -16311,6 +16311,8 @@ bool propobjInteract(struct prop *prop)
 		} else if (!PLAYERNUM_IS_ANTI(g_Vars.currentplayernum)) {
 			obj->hidden |= OBJHFLAG_ACTIVATED_BY_COOP;
 		}
+
+		prop->activatedbymask |= (1 << g_Vars.currentplayernum);
 #else
 		if (g_Vars.currentplayernum == g_Vars.coopplayernum) {
 			obj->hidden |= OBJHFLAG_ACTIVATED_BY_COOP;

@@ -174,6 +174,7 @@ struct prop *propAllocate(void)
 #ifndef PLATFORM_N64
 		// NOTE: this will be automatically overwritten at the start of the stage for the setup props
 		prop->syncid = (g_NetMode == NETMODE_SERVER) ? g_NetNextSyncId++ : 0;
+		prop->activatedbymask = 0;
 #endif
 		g_Vars.propstates[prop->propstateindex].propcount++;
 

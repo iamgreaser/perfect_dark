@@ -2200,12 +2200,18 @@ bool aiIfChrActivatedObject(void)
 			if (obj->hidden & (OBJHFLAG_ACTIVATED_BY_BOND | OBJHFLAG_ACTIVATED_BY_COOP)) {
 				pass = true;
 				obj->hidden &= ~(OBJHFLAG_ACTIVATED_BY_BOND | OBJHFLAG_ACTIVATED_BY_COOP);
+				obj->prop->activatedbymask = 0;
 			}
 #if MAX_COOPCHRS > 2
-		} else if (cmd[2] == CHR_COOP) {
-			if (g_Vars.coopplayernum >= 0 && (obj->hidden & OBJHFLAG_ACTIVATED_BY_COOP)) {
+		} else if (cmd[2] == CHR_P1P2) {
+			if (obj->prop->activatedbymask & (1 << g_Vars.chrdata->p1p2)) {
 				pass = true;
-				obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_COOP;
+				obj->prop->activatedbymask &= ~(1 << g_Vars.chrdata->p1p2);
+				if (g_Vars.chrdata->p1p2 == g_Vars.bondplayernum) {
+					obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_BOND;
+				} else {
+					obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_COOP;
+				}
 			}
 #endif
 		} else {
@@ -2215,9 +2221,11 @@ bool aiIfChrActivatedObject(void)
 				if (chr->prop == g_Vars.bond->prop && (obj->hidden & OBJHFLAG_ACTIVATED_BY_BOND)) {
 					pass = true;
 					obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_BOND;
+					obj->prop->activatedbymask &= ~(1 << g_Vars.bondplayernum);
 				} else if (g_Vars.coopplayernum >= 0 && chr->prop == g_Vars.coop->prop && (obj->hidden & OBJHFLAG_ACTIVATED_BY_COOP)) {
 					pass = true;
 					obj->hidden &= ~OBJHFLAG_ACTIVATED_BY_COOP;
+					obj->prop->activatedbymask &= (1 << g_Vars.bondplayernum);
 				}
 			}
 		}

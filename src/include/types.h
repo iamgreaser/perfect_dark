@@ -326,6 +326,7 @@ struct prop {
 	/*0x44*/ struct wallhit *xluwallhits; // translucent
 #ifndef PLATFORM_N64
 	/*0x48*/ u32 syncid;
+	/*Ext*/ u32 activatedbymask;
 #endif
 };
 
